@@ -3,39 +3,15 @@ import { BrowserRouter as Router, Route, Link } from "react-router-dom";
 import axios from 'axios';
 import './App.css';
 
-import { Table, Navbar, Nav, NavItem, Button } from 'react-bootstrap';
+import { Table, Navbar, Nav, Button } from 'react-bootstrap';
 
 class App extends Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            kontakts: []
-        };
-    }
-    componentDidMount() {
-        axios.get(`https://kontakt-api.herokuapp.com/api/kontakts`)
-        .then(res => {
-            const posts = res;
-            console.log(res);
-            this.setState({ posts });
-        });
-    }
+
     render() {
         return (
             <Router>
                 <div>
-                    <Navbar>
-                        <Navbar.Header>
-                            <Navbar.Brand>
-                                <Link to="/">Kontakt</Link>
-                            </Navbar.Brand>
-                        </Navbar.Header>
-                        <Nav>
-                            {/* <NavItem eventKey={1} href="#"> */}
-                                {/* <Link to="/kontakts/new"><Button bsStyle="primary" bsSize="xsmall">+</Button></Link> */}
-                            {/* </NavItem> */}
-                        </Nav>
-                    </Navbar>
+                    <KontaktNav/>
 
                     <Route exact path="/" component={Home} />
                     <Route path="/kontakts/new" component={NewKontakt} />
@@ -45,41 +21,72 @@ class App extends Component {
     }
 }
 
+const KontaktNav = () => (
+    <Navbar>
+        <Navbar.Header>
+            <Navbar.Brand>
+                <Link to="/">Kontakt</Link>
+            </Navbar.Brand>
+        </Navbar.Header>
+        <Nav>
+            <Navbar.Text>
+                <Link to="/kontakts/new"><Button bsStyle="primary" bsSize="small">+</Button></Link>
+            </Navbar.Text>
+        </Nav>
+    </Navbar>
+)
 
-const Home = () => (
-  <div className="container">
-    <Table hover>
-      <thead>
-        <tr>
-            <th>Name</th>
-            <th>Phone Number</th>
-            <th>Email Address</th>
-            <th>Street Address</th>
-            <th>Edit</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>1</td>
-          <td>Mark</td>
-          <td>Otto</td>
-          <td>@mdo</td>
-        </tr>
-        <tr>
-          <td>2</td>
-          <td>Jacob</td>
-          <td>Thornton</td>
-          <td>@fat</td>
-        </tr>
-        <tr>
-          <td>3</td>
-          <td colSpan="2">Larry the Bird</td>
-          <td>@twitter</td>
-        </tr>
-      </tbody>
-    </Table>
+class Home extends Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            kontakts: []
+        };
+    }
+    componentDidMount() {
+        axios.get(`https://kontakt-api.herokuapp.com/api/kontakts`)
+        .then(res => {
+            const kontakts = res.data;
+            console.log(kontakts);
+            this.setState({ kontakts });
+        });
+    }
+    render() {
+        return (
+            <div className="container">
+                <Table hover>
+                  <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Phone Number</th>
+                        <th>Email Address</th>
+                        <th>Street Address</th>
+                        <th>Edit</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                      {this.state.kontakts.map((kontakt) => {
+                          return <KontaktRow key={kontakt.id} kontakt={kontakt}/>
+                      })}
+                  </tbody>
+                </Table>
   </div>
-);
+        )
+    }
+}
+
+const KontaktRow = ({kontakt}) => {
+    return (
+        <tr>
+            <td>{kontakt.name}</td>
+            <td>{kontakt.phoneNumber}</td>
+            <td>{kontakt.emailAddress}</td>
+            <td>{`${kontakt.addressLineOne}, ${kontakt.addressLineTwo}, ${kontakt.state}, ${kontakt.country}, ${kontakt.zipcode}`}</td>
+            <td>Edit</td>
+        </tr>
+    )
+}
+
 
 const NewKontakt = () => (
   <div>
@@ -87,5 +94,4 @@ const NewKontakt = () => (
   </div>
 );
 
-// export default App;
 export default App;
