@@ -15,6 +15,7 @@ class App extends Component {
 
                     <Route exact path="/" component={Home} />
                     <Route path="/kontakts/new" component={NewKontakt} />
+                    <Route path="/kontakts/:id/edit" component={NewKontakt} />
                 </div>
             </Router>
         )
@@ -30,7 +31,7 @@ const KontaktNav = () => (
         </Navbar.Header>
         <Nav>
             <Navbar.Text>
-                <Link to="/kontakts/new"><Button bsStyle="primary" bsSize="small">+</Button></Link>
+                <Link to="/kontakts/new"><Button bsStyle="primary" bsSize="xsmall">+</Button></Link>
             </Navbar.Text>
         </Nav>
     </Navbar>
@@ -61,7 +62,7 @@ class Home extends Component {
                         <th>Phone Number</th>
                         <th>Email Address</th>
                         <th>Street Address</th>
-                        <th>Edit</th>
+                        <th></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -82,7 +83,7 @@ const KontaktRow = ({kontakt}) => {
             <td>{kontakt.phoneNumber}</td>
             <td>{kontakt.emailAddress}</td>
             <td>{`${kontakt.addressLineOne}, ${kontakt.addressLineTwo}, ${kontakt.state}, ${kontakt.country}, ${kontakt.zipcode}`}</td>
-            <td>Edit</td>
+            <td><Link to={`kontakts/${kontakt.id}/edit`}><Button bsStyle="default" bsSize="small">Edit</Button></Link></td>
         </tr>
     )
 }
