@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { BrowserRouter as Router, Route, Link } from "react-router-dom";
+import { BrowserRouter as Router, Route, Link, Redirect } from "react-router-dom";
 import axios from 'axios';
 import './App.css';
 
@@ -20,9 +20,11 @@ class App extends Component {
         axios.get(`https://kontakt-api.herokuapp.com/api/kontakts`)
         .then(res => {
             const kontakts = res.data;
-            console.log(kontakts);
             this.setState({ kontakts });
         });
+    }
+    componentDidUpdate() {
+        console.log("foobar");
     }
     render() {
         return (
@@ -30,8 +32,11 @@ class App extends Component {
                 <div>
                     <KontaktNav/>
                     <Route exact path="/" render={() => <Home kontakts={this.state.kontakts}/>} />
-                    <Route path="/kontakts/new" component={NewKontakt} />
-                    <Route path="/kontakts/:id/edit" render={(props) => <EditKontakt id={props.match.params.id}/>} />
+                    <Route path="/kontakts/new" render={(props) => <NewKontakt history={props.history} />} />
+                    <Route path="/kontakts/:id/edit" render={(props) => {
+                        console.log(props)
+                        return <EditKontakt id={props.match.params.id}/>
+                    } } />
                 </div>
             </Router>
         )
@@ -47,12 +52,22 @@ const FieldGroup = ({ id, label, ...props }) => {
   );
 }
 
-const FormInstance = ({kontakt}) => {
+const FormInstance = ({kontakt, onSubmit, handleTyping, fireRedirect, history, isEditForm, deleteKontakt}) => {
     return (
-      <form>
+      <form onSubmit={(e) => {e.preventDefault(); onSubmit({ name: e.target[0].value,
+                                                             phoneNumber: e.target[1].value,
+                                                             emailAddress: e.target[2].value,
+                                                             addressLineOne: e.target[3].value,
+                                                             addressLineTwo: e.target[4].value,
+                                                             state: e.target[5].value,
+                                                             country: e.target[6].value,
+                                                             zipcode: e.target[7].value,
+
+                                                            })}}>
         <FieldGroup
           id="formControlsName"
           value={`${kontakt.name}`}
+          onChange={(e) => {handleTyping(e.target.value, "name")}}
           type="text"
           label="Name"
           placeholder=""
@@ -60,6 +75,7 @@ const FormInstance = ({kontakt}) => {
         <FieldGroup
           id="formControlsPhone"
           value={`${kontakt.phoneNumber}`}
+          onChange={(e) => {handleTyping(e.target.value, "phoneNumber")}}
           type="text"
           label="Phone Number"
           placeholder=""
@@ -67,6 +83,7 @@ const FormInstance = ({kontakt}) => {
         <FieldGroup
           id="formControlsEmail"
           value={`${kontakt.emailAddress}`}
+          onChange={(e) => {handleTyping(e.target.value, "emailAddress")}}
           type="email"
           label="Email address"
           placeholder=""
@@ -74,6 +91,7 @@ const FormInstance = ({kontakt}) => {
         <FieldGroup
           id="formControlsAddressLineOne"
           value={`${kontakt.addressLineOne}`}
+          onChange={(e) => {handleTyping(e.target.value, "addressLineOne")}}
           type="text"
           label="Address"
           placeholder=""
@@ -81,6 +99,7 @@ const FormInstance = ({kontakt}) => {
         <FieldGroup
           id="formControlsAddressLineTwo"
           value={`${kontakt.addressLineTwo}`}
+          onChange={(e) => {handleTyping(e.target.value, "addressLineTwo")}}
           type="text"
           label="Address (cont'd)"
           placeholder=""
@@ -88,6 +107,7 @@ const FormInstance = ({kontakt}) => {
         <FieldGroup
           id="formControlsState"
           value={`${kontakt.state}`}
+          onChange={(e) => {handleTyping(e.target.value, "state")}}
           type="text"
           label="State"
           placeholder=""
@@ -95,6 +115,7 @@ const FormInstance = ({kontakt}) => {
         <FieldGroup
           id="formControlsCountry"
           value={`${kontakt.country}`}
+          onChange={(e) => {handleTyping(e.target.value, "country")}}
           type="text"
           label="Country"
           placeholder=""
@@ -102,12 +123,18 @@ const FormInstance = ({kontakt}) => {
         <FieldGroup
           id="formControlsZipcode"
           value={`${kontakt.zipcode}`}
+          onChange={(e) => {handleTyping(e.target.value, "zipcode")}}
           type="text"
           label="Zipcode"
           placeholder=""
         />
 
-        <Button onClick={(e) => {e.preventDefault();console.log("clicked")}} type="submit">Submit</Button>
+        <Button type="submit">Submit</Button>
+
+        <br/>
+        <br/>
+        
+        {isEditForm ? <Button bsStyle="danger" onClick={() => deleteKontakt()}>Delete</Button> : <br/>}
 
         <br/>
         <br/>
@@ -118,6 +145,7 @@ const FormInstance = ({kontakt}) => {
 
 class EditKontakt extends Component {
     constructor(props) {
+        console.log(props);
         super(props)
         this.state = {
             id: props.id,
@@ -129,8 +157,12 @@ class EditKontakt extends Component {
                         state: "",
                         country: "",
                         zipcode: ""
-                    }
+                    },
+            history: props.history
         }
+        this.updateKontakt = this._updateKontakt.bind(this)
+        this.handleTyping = this._handleTyping.bind(this)
+        this.deleteKontakt = this._deleteKontakt.bind(this)
     }
     componentDidMount() {
         const id = this.state.id
@@ -140,27 +172,91 @@ class EditKontakt extends Component {
             this.setState({ kontakt });
         });
     }
+
+    _updateKontakt(kontakt) {
+        kontakt["id"] = this.state.id
+        axios.put(`https://kontakt-api.herokuapp.com/api/kontakts/${this.state.id}`, kontakt)
+        .then(res => {
+            console.log(res)
+            this.setState({fireRedirect: true})
+            // this.setState({ kontakt });
+        });
+    }
+
+    _deleteKontakt() {
+        axios.delete(`https://kontakt-api.herokuapp.com/api/kontakts/${this.state.id}`)
+        .then(res => {
+            this.setState({fireRedirect: true})
+        });
+    }
+
+    _handleTyping(value, field) {
+        let newState = {kontakt: {...this.state.kontakt} }
+        newState.kontakt[field] = value;
+        this.setState(newState)
+    }
+
     render() {
         return (<div className="container">
             <h1>Edit Your Kontakt</h1>
-            <FormInstance kontakt={this.state.kontakt}/>
+            <FormInstance history={this.state.history}
+                          isEditForm={true}
+                          kontakt={this.state.kontakt}
+                          onSubmit={this.updateKontakt}
+                          handleTyping={this.handleTyping}
+                          deleteKontakt={this.deleteKontakt}/>
         </div>)
     }
 }
 
-const NewKontakt = () => (
-    <div className="container">
-    <h1>Add a New Kontakt</h1>
-    <FormInstance kontakt={{name: "",
-                            phoneNumber: "",
-                            emailAddress: "",
-                            addressLineOne: "",
-                            addressLineTwo: "",
-                            state: "",
-                            country: "",
-                            zipcode: ""}}/>
-    </div>
-)
+class NewKontakt extends Component {
+    constructor(props) {
+        console.log(props);
+        super(props)
+        this.state = {kontakt: {name: "",
+                                phoneNumber: "",
+                                emailAddress: "",
+                                addressLineOne: "",
+                                addressLineTwo: "",
+                                state: "",
+                                country: "",
+                                zipcode: ""},
+                      fireRedirect: false,
+                      history: props.history}
+        this.createNewKontakt = this._createNewKontakt.bind(this)
+        this.handleTyping = this._handleTyping.bind(this)
+    }
+
+    _createNewKontakt(kontakt) {
+        axios.post(`https://kontakt-api.herokuapp.com/api/kontakts`, kontakt)
+        .then(res => {
+            console.log(res)
+            this.setState({fireRedirect: true})
+            // this.setState({ kontakt });
+        });
+    }
+
+    _handleTyping(value, field) {
+        let newState = {kontakt: {...this.state.kontakt} }
+        newState.kontakt[field] = value;
+        this.setState(newState)
+    }
+
+    render() {
+        console.log(this.state.history);
+        return (
+            <div className="container">
+            <h1>Add a New Kontakt</h1>
+            <FormInstance kontakt={this.state.kontakt}
+                          isEditForm={false}
+                          onSubmit={this.createNewKontakt}
+                          handleTyping={this.handleTyping}
+                          fireRedirect={this.state.fireRedirect}
+                          history={this.state.history}/>
+            </div>
+        )
+    }
+}
 
 const KontaktNav = () => (
     <Navbar>
