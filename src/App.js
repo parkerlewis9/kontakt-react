@@ -23,9 +23,6 @@ class App extends Component {
             this.setState({ kontakts });
         });
     }
-    componentDidUpdate() {
-        console.log("foobar");
-    }
     render() {
         return (
             <Router>
@@ -33,10 +30,7 @@ class App extends Component {
                     <KontaktNav/>
                     <Route exact path="/" render={() => <Home kontakts={this.state.kontakts}/>} />
                     <Route path="/kontakts/new" render={(props) => <NewKontakt history={props.history} />} />
-                    <Route path="/kontakts/:id/edit" render={(props) => {
-                        console.log(props)
-                        return <EditKontakt id={props.match.params.id}/>
-                    } } />
+                    <Route path="/kontakts/:id/edit" render={(props) => <EditKontakt id={props.match.params.id}/> } />
                 </div>
             </Router>
         )
@@ -101,7 +95,7 @@ const FormInstance = ({kontakt, onSubmit, handleTyping, fireRedirect, history, i
           value={`${kontakt.addressLineTwo}`}
           onChange={(e) => {handleTyping(e.target.value, "addressLineTwo")}}
           type="text"
-          label="Address (cont'd)"
+          label="City"
           placeholder=""
         />
         <FieldGroup
@@ -133,7 +127,7 @@ const FormInstance = ({kontakt, onSubmit, handleTyping, fireRedirect, history, i
 
         <br/>
         <br/>
-        
+
         {isEditForm ? <Button bsStyle="danger" onClick={() => deleteKontakt()}>Delete</Button> : <br/>}
 
         <br/>
@@ -177,16 +171,14 @@ class EditKontakt extends Component {
         kontakt["id"] = this.state.id
         axios.put(`https://kontakt-api.herokuapp.com/api/kontakts/${this.state.id}`, kontakt)
         .then(res => {
-            console.log(res)
-            this.setState({fireRedirect: true})
-            // this.setState({ kontakt });
+            window.location.assign("/")
         });
     }
 
     _deleteKontakt() {
         axios.delete(`https://kontakt-api.herokuapp.com/api/kontakts/${this.state.id}`)
         .then(res => {
-            this.setState({fireRedirect: true})
+            window.location.assign("/")
         });
     }
 
@@ -211,7 +203,6 @@ class EditKontakt extends Component {
 
 class NewKontakt extends Component {
     constructor(props) {
-        console.log(props);
         super(props)
         this.state = {kontakt: {name: "",
                                 phoneNumber: "",
@@ -230,9 +221,7 @@ class NewKontakt extends Component {
     _createNewKontakt(kontakt) {
         axios.post(`https://kontakt-api.herokuapp.com/api/kontakts`, kontakt)
         .then(res => {
-            console.log(res)
-            this.setState({fireRedirect: true})
-            // this.setState({ kontakt });
+            window.location.assign("/")
         });
     }
 
